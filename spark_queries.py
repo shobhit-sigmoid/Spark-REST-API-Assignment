@@ -8,6 +8,8 @@ spark_df = spark_df.withColumn('Date', spark_df['Date'].cast('date'))
 # creating a temporary view i.e, a table of a dataframe
 spark_df.createTempView('stocks')
 
+## Please modify first query for -ve percentage also
+
 def max_diff_stock_daily_basis():
     try:
         query1 = """Select stock_table.company, stock_table.date, stock_table.max_diff_stock_percent from 
