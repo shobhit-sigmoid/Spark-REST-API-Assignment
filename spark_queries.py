@@ -1,8 +1,11 @@
 from pyspark.sql import SparkSession
 
 spark = SparkSession.builder.appName('Stock Project').getOrCreate()
+# read all the csv files in the directory into a spark dataframe
 spark_df = spark.read.csv('csv_database/*.csv', sep=',', header=True)
+# converting the Date column from string format to date format
 spark_df = spark_df.withColumn('Date', spark_df['Date'].cast('date'))
+# creating a temporary view i.e, a table of a dataframe
 spark_df.createTempView('stocks')
 
 def max_diff_stock_daily_basis():
@@ -11,6 +14,8 @@ def max_diff_stock_daily_basis():
                  (Select date,company,((high-open)/open)*100 as max_diff_stock_percent, dense_rank()
                  OVER ( partition by date order by ( high-open)/open desc ) as dense_rank FROM stocks)stock_table 
                  where stock_table.dense_rank=1"""
+
+        # storing data into a variable
         data = spark.sql(query1).collect()
         results = {}
         for row in data:
@@ -27,6 +32,7 @@ def most_traded_stock_on_each_day():
         dense_rank() over (partition by date order by int(volume) desc) as dense_rank from stocks)stock_table
         where stock_table.dense_rank=1
         """
+        # storing data into a variable
         data = spark.sql(query).collect()
         results = {}
         for row in data:
@@ -42,6 +48,7 @@ def max_gap_up_and_gap_down():
                 (Select company, open, date, close, lag(close,1,35.724998) over(partition by company order by date) as
                 previous_close from stocks asc)stocks_table order by max_gap desc limit 1
             """
+        # storing data into a variable
         data = spark.sql(query).collect()
         results = {}
         for row in data:
@@ -59,6 +66,7 @@ def max_moved_stock():
           select df1.company, df1.open, df2.close, df1.open-df2.close as max_diff from df1 inner join df2 where df1.company = df2.company
           order by max_diff DESC limit 1
         """
+        # storing data into a variable
         data = spark.sql(query).collect()
         results = {}
         for row in data:
@@ -76,6 +84,7 @@ def standard_deviation_for_stocks():
         query = """
             select Company, stddev_samp(Volume) as Standard_Deviation from stocks group by Company
         """
+        # storing data into a variable
         data = spark.sql(query).collect()
         data = dict(data)
         results = []
@@ -90,6 +99,7 @@ def mean_and_median_prices_for_stocks():
         query = """
                 Select company, avg(Close) as mean, percentile_approx(Close,0.5) as median from stocks group by company
             """
+        # storing data into a variable
         data = spark.sql(query).collect()
         results = []
         for row in data:
@@ -103,6 +113,7 @@ def average_volume_for_stocks():
         query = """
             select Company, AVG(Volume) as Average_Volume from stocks group by Company order by Average_Volume desc
         """
+        # storing data into a variable
         data = spark.sql(query).collect()
         data = dict(data)
         results = []
@@ -119,6 +130,7 @@ def highest_stock_average_volume():
             select Company, AVG(Volume) as Average_Volume from stocks group by Company order by Average_Volume desc limit 1
         """
         spark.sql(query).show()
+        # storing data into a variable
         data = spark.sql(query).collect()
         data = dict(data)
         results = []
@@ -133,6 +145,7 @@ def highest_and_lowest_stock_prices():
         query = """
             select Company, MAX(high) as Highest_Price, MIN(low) as Lowest_Price from stocks group by Company
         """
+        # storing data into a variable
         data = spark.sql(query).collect()
         results = []
         for row in data:
