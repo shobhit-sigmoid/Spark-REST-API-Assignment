@@ -54,20 +54,21 @@ def max_gap_up_and_gap_down():
 def max_moved_stock():
     try:
         query = """
-        Select stocks_table.company, stocks_table.open, stocks_table.high, (stocks_table.high - stocks_table.open) 
-        as max_diff from (Select company, (Select open from stocks limit 1) as open, max(high) as high 
-        from stocks group by company)stocks_table order by max_diff desc limit 1
+        with df1 as (select company, open from (select company, open, dense_rank() over (partition by company order by date) as d_rank1 from stocks)stock_table where stock_table.d_rank1=1)
+          , df2 as (select company, close from (select company, close, dense_rank() over (partition by company order by date desc) as d_rank2 from stocks)stock_table2 where stock_table2.d_rank2 = 1)
+          select df1.company, df1.open, df2.close, df1.open-df2.close as max_diff from df1 inner join df2 where df1.company = df2.company
+          order by max_diff DESC limit 1
         """
         data = spark.sql(query).collect()
         results = {}
         for row in data:
             results['company'] = row['company']
             results['open'] = row['open']
-            results['high'] = row['high']
+            results['close'] = row['close']
             results['max_diff'] = row['max_diff']
         return results
     except Exception as e:
-        return {'Error' : e}
+        return {'Error': e}
 
 
 def standard_deviation_for_stocks():
